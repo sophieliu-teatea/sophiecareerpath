@@ -1,0 +1,1368 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>核心價值檢核器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== 全域重置與基本設定 ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* 莫蘭迪中性色系 CSS 變數 */
+  :root {
+    --bg-page:        #f0ede8;
+    --bg-card:        #faf8f5;
+    --bg-card-hover:  #f5f2ed;
+    --bg-input:       #ffffff;
+    --bg-accent:      #e8e4dc;
+    --bg-tag:         #ddd9d0;
+
+    --text-primary:   #3a3630;
+    --text-secondary: #6b6560;
+    --text-muted:     #9e9890;
+    --text-on-accent: #4a4540;
+
+    --border-light:   rgba(90, 80, 70, 0.12);
+    --border-mid:     rgba(90, 80, 70, 0.22);
+    --border-focus:   #8a8075;
+
+    --accent-warm:    #a09080;
+    --accent-sage:    #8a9285;
+    --accent-sand:    #b5a898;
+    --accent-clay:    #c4a882;
+
+    --success-bg:     #e8ede5;
+    --success-text:   #4a6045;
+    --error-bg:       #f0e8e6;
+    --error-text:     #7a4540;
+    --warning-bg:     #f0ebe0;
+    --warning-text:   #7a6040;
+
+    --radius-sm:  6px;
+    --radius-md:  10px;
+    --radius-lg:  16px;
+    --radius-xl:  20px;
+
+    --shadow-card: 0 2px 16px rgba(60, 50, 40, 0.08), 0 1px 4px rgba(60, 50, 40, 0.05);
+    --shadow-input: 0 1px 4px rgba(60, 50, 40, 0.06);
+    --transition: 0.2s ease;
+
+    --font-main: 'Noto Sans TC', -apple-system, sans-serif;
+  }
+
+  body {
+    font-family: var(--font-main);
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ===== 頁面佈局 ===== */
+  .page-wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  /* ===== 頁首區塊 ===== */
+  .page-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 48px 32px 40px;
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-card);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent-sage), var(--accent-sand), var(--accent-clay));
+  }
+
+  .header-badge {
+    display: inline-block;
+    background: var(--bg-accent);
+    color: var(--text-on-accent);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border-light);
+  }
+
+  .page-title {
+    font-size: clamp(22px, 4vw, 30px);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+  }
+
+  .page-desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    margin: 0 auto;
+    line-height: 1.8;
+  }
+
+  /* ===== 進度列 ===== */
+  .progress-bar-wrap {
+    margin-bottom: 32px;
+    background: var(--bg-card);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-card);
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .progress-track {
+    height: 5px;
+    background: var(--bg-accent);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-sage), var(--accent-clay));
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ===== 問題卡片 ===== */
+  .question-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-card);
+    padding: 28px 28px 24px;
+    margin-bottom: 20px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    position: relative;
+  }
+
+  .question-card:focus-within {
+    border-color: var(--border-focus);
+    box-shadow: var(--shadow-card), 0 0 0 3px rgba(138, 128, 117, 0.1);
+  }
+
+  .question-card.has-error {
+    border-color: #c09080;
+    box-shadow: var(--shadow-card), 0 0 0 3px rgba(192, 144, 128, 0.12);
+  }
+
+  /* 題號標籤 */
+  .q-number {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .q-num-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--bg-accent);
+    border: 1px solid var(--border-mid);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  /* 問題標題 */
+  .q-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.6;
+  }
+
+  /* 問題說明（選填） */
+  .q-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    line-height: 1.6;
+  }
+
+  /* 文字輸入框 */
+  textarea.q-input {
+    width: 100%;
+    min-height: 110px;
+    padding: 12px 14px;
+    font-family: var(--font-main);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-primary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    box-shadow: var(--shadow-input);
+  }
+
+  textarea.q-input:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(138, 128, 117, 0.12);
+  }
+
+  textarea.q-input::placeholder {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* 字數計數器 */
+  .char-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .char-count.too-short { color: #c09080; }
+  .char-count.ok        { color: var(--accent-sage); }
+
+  /* 錯誤訊息 */
+  .error-msg {
+    display: none;
+    font-size: 12px;
+    color: var(--error-text);
+    background: var(--error-bg);
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    margin-top: 8px;
+    border: 1px solid rgba(192, 144, 128, 0.25);
+  }
+
+  .error-msg.show { display: block; }
+
+  /* ===== 範例參考區塊 ===== */
+  .example-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--accent-warm);
+    background: none;
+    border: 1px solid var(--border-mid);
+    border-radius: 100px;
+    padding: 4px 12px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all var(--transition);
+    font-family: var(--font-main);
+    font-weight: 500;
+  }
+
+  .example-toggle:hover {
+    background: var(--bg-accent);
+    border-color: var(--accent-warm);
+  }
+
+  .example-toggle .arrow {
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+
+  .example-toggle.open .arrow { transform: rotate(90deg); }
+
+  .example-box {
+    display: none;
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: var(--bg-accent);
+    border-radius: var(--radius-md);
+    border-left: 3px solid var(--accent-sand);
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .example-box.show { display: block; }
+
+  .example-box strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-warm);
+    margin-bottom: 6px;
+  }
+
+  /* ===== 說明提示（填寫困難時） ===== */
+  .tip-box {
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: var(--warning-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(160, 130, 80, 0.2);
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    display: none;
+  }
+
+  .tip-box.show { display: block; }
+
+  .tip-box strong {
+    color: var(--warning-text);
+    font-weight: 600;
+  }
+
+  /* ===== 分析結果區塊 ===== */
+  .result-section {
+    display: none;
+    margin-top: 32px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .result-section.show { display: block; }
+
+  .result-card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .result-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .result-header-icon {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--bg-accent);
+    border: 1px solid var(--border-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .result-header-text h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .result-header-text p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .result-body {
+    padding: 20px 24px;
+  }
+
+  /* 關鍵字標籤群組 */
+  .tag-group {
+    margin-bottom: 18px;
+  }
+
+  .tag-group-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tag-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-light);
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* 不同色系的關鍵字標籤 */
+  .tag {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid transparent;
+  }
+
+  .tag.verb {
+    background: #e6eae5;
+    color: #4a6045;
+    border-color: rgba(74, 96, 69, 0.2);
+  }
+
+  .tag.noun {
+    background: #eae5de;
+    color: #5a4835;
+    border-color: rgba(90, 72, 53, 0.2);
+  }
+
+  .tag.emotion {
+    background: #e8e2ea;
+    color: #584560;
+    border-color: rgba(88, 69, 96, 0.2);
+  }
+
+  .tag.pattern {
+    background: #dfe5e8;
+    color: #355465;
+    border-color: rgba(53, 84, 101, 0.2);
+  }
+
+  /* 核心方法論框 */
+  .methodology-box {
+    background: linear-gradient(135deg, #f0ede7 0%, #e8e4dc 100%);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    border: 1px solid var(--border-mid);
+    margin-top: 6px;
+  }
+
+  .methodology-type {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-warm);
+    margin-bottom: 6px;
+  }
+
+  .methodology-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+  }
+
+  .methodology-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+  }
+
+  .methodology-scenarios {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .scenario-tag {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--border-mid);
+    border-radius: 100px;
+    padding: 3px 10px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* AI 分析說明文字 */
+  .ai-analysis {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  /* 載入動畫 */
+  .loading-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(240, 237, 232, 0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    backdrop-filter: blur(4px);
+  }
+
+  .loading-overlay.show {
+    display: flex;
+  }
+
+  .loading-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--bg-accent);
+    border-top-color: var(--accent-warm);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  .loading-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  /* ===== 按鈕 ===== */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 32px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 24px;
+    border-radius: var(--radius-md);
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    border: 1px solid transparent;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--text-primary);
+    color: var(--bg-card);
+    border-color: var(--text-primary);
+  }
+
+  .btn-primary:hover {
+    background: #2a2420;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(60, 50, 40, 0.2);
+  }
+
+  .btn-secondary {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-color: var(--border-mid);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-accent);
+    border-color: var(--accent-warm);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border-color: var(--border-light);
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  .btn-ghost:hover {
+    background: var(--bg-accent);
+    color: var(--text-secondary);
+  }
+
+  /* ===== 複製按鈕 ===== */
+  .copy-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+    gap: 8px;
+  }
+
+  /* ===== 多次填寫提示 ===== */
+  .refill-notice {
+    background: var(--success-bg);
+    border: 1px solid rgba(74, 96, 69, 0.2);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+    font-size: 13px;
+    color: var(--success-text);
+    margin-top: 20px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .refill-notice.show { display: block; }
+
+  /* ===== 動畫 ===== */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ===== 頁尾 ===== */
+  .page-footer {
+    text-align: center;
+    margin-top: 48px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* ===== RWD 行動版調整 ===== */
+  @media (max-width: 600px) {
+    .page-wrapper { padding: 24px 16px 60px; }
+    .page-header  { padding: 36px 20px 28px; }
+    .question-card { padding: 20px 18px 18px; }
+    .result-body  { padding: 16px 18px; }
+    .btn-row { flex-direction: column; }
+    .btn { justify-content: center; }
+  }
+
+  /* ===== 無障礙：隱藏但可被讀屏 ===== */
+  .sr-only {
+    position: absolute; width: 1px; height: 1px;
+    padding: 0; margin: -1px; overflow: hidden;
+    clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- 讀屏摘要 -->
+<span class="sr-only">核心價值檢核器：六題問卷，協助您了解自己的核心能力與職涯優勢</span>
+
+<!-- 載入中覆蓋層 -->
+<div class="loading-overlay" id="loadingOverlay" role="status" aria-live="polite">
+  <div class="loading-spinner" aria-hidden="true"></div>
+  <p class="loading-text" id="loadingText">正在分析您的核心能力⋯⋯</p>
+</div>
+
+<main class="page-wrapper">
+
+  <!-- ===== 頁首 ===== -->
+  <header class="page-header">
+    <div class="header-badge">職涯諮詢工具</div>
+    <h1 class="page-title">核心價值檢核器</h1>
+    <p class="page-desc">透過六道深度問題，幫助您釐清最核心的工作模式與能力優勢，<br>了解這些優勢如何延伸到不同職能情境。</p>
+  </header>
+
+  <!-- ===== 進度列 ===== -->
+  <div class="progress-bar-wrap" aria-label="填寫進度">
+    <div class="progress-info">
+      <span id="progressLabel">尚未開始填寫</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+  </div>
+
+  <!-- ===== 問卷表單 ===== -->
+  <form id="mainForm" novalidate>
+
+    <!-- 第一題 -->
+    <div class="question-card" id="card-1">
+      <div class="q-number"><span class="q-num-dot">1</span> 第一題</div>
+      <label class="q-label" for="q1">
+        描述一個你做得最順、最不費力的工作經歷，請盡可能說明細節和執行內容。<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">不限長度，越多細節越佳。</p>
+      <textarea class="q-input" id="q1" name="q1"
+        placeholder="例如：舉辦 Uber Eats 線上商城專案說明會⋯⋯"
+        rows="5" aria-required="true" aria-describedby="q1-counter q1-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q1-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex1" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q1-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex1">
+        <strong>📝 範例參考</strong>
+        過往在公關公司受過高強度的議題設定和新聞稿撰寫訓練；之後到了電腦公司一樣從事公關工作，雖然需要多花一點時間理解產品技術，但在建構新聞稿時，覺得相對得心應手。
+      </div>
+      <button type="button" class="example-toggle" style="margin-left:0;margin-top:8px;" data-tip="tip1" aria-expanded="false">
+        <span class="arrow">▶</span> 不知道要寫什麼？
+      </button>
+      <div class="tip-box" id="tip1">
+        <strong>💡 填寫提示</strong><br>
+        工作經歷的挑選可大可小，重點是這件事情「因為你」而得以處理順利。不是事件本身的難度，而是你的經驗累積和個人特質帶來了不同的做法與更好的結果。
+      </div>
+    </div>
+
+    <!-- 第二題 -->
+    <div class="question-card" id="card-2">
+      <div class="q-number"><span class="q-num-dot">2</span> 第二題</div>
+      <label class="q-label" for="q2">
+        準備這件事的時候，你第一個想搞清楚的是什麼？<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">包含但不限於相關的人事時地物、案件資訊、利害關係人、時程或預算等。</p>
+      <textarea class="q-input" id="q2" name="q2"
+        placeholder="我最先想了解的是⋯⋯"
+        rows="4" aria-required="true" aria-describedby="q2-counter q2-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q2-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex2" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q2-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex2">
+        <strong>📝 範例參考</strong>
+        產品技術的背景資訊和核心亮點。我需要先了解這個產品的技術規格、市場定位，以及它與競品的差異，才能判斷哪些訊息最值得強調。
+      </div>
+    </div>
+
+    <!-- 第三題 -->
+    <div class="question-card" id="card-3">
+      <div class="q-number"><span class="q-num-dot">3</span> 第三題</div>
+      <label class="q-label" for="q3">
+        你怎麼判斷該怎麼做？當時你去找了什麼資訊？<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">可分享你的做法，以及如何排除困難。</p>
+      <textarea class="q-input" id="q3" name="q3"
+        placeholder="我的判斷依據和資訊來源是⋯⋯"
+        rows="4" aria-required="true" aria-describedby="q3-counter q3-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q3-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex3" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q3-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex3">
+        <strong>📝 範例參考</strong>
+        過去的工作經驗有給我一定程度的判斷能力；網路上有很多科普資訊，是最直覺的做法；也會詢問 PM 釐清產品的核心價值主張，再與媒體關係互相比對。
+      </div>
+    </div>
+
+    <!-- 第四題 -->
+    <div class="question-card" id="card-4">
+      <div class="q-number"><span class="q-num-dot">4</span> 第四題</div>
+      <label class="q-label" for="q4">
+        如果把你換掉，換一個同樣資歷的人，哪個地方最可能出問題？<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">這件事由你旁邊的同事來做，結果會一樣嗎？你會注意到哪些他不會注意到的點？</p>
+      <textarea class="q-input" id="q4" name="q4"
+        placeholder="換成其他人，最容易在以下地方出問題⋯⋯"
+        rows="4" aria-required="true" aria-describedby="q4-counter q4-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q4-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex4" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q4-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex4">
+        <strong>📝 範例參考</strong>
+        雖然掌握了產品資訊，但沒辦法轉化為有市場價值或策略意義的亮點訊息。很多人可以描述功能，但無法提煉出真正打動媒體和讀者的角度。
+      </div>
+    </div>
+
+    <!-- 第五題 -->
+    <div class="question-card" id="card-5">
+      <div class="q-number"><span class="q-num-dot">5</span> 第五題</div>
+      <label class="q-label" for="q5">
+        有沒有遇過沒辦法這樣做的情況？那時候是什麼感覺？<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">例如：感覺像是在迷霧中、感覺被卡住無法前進⋯⋯</p>
+      <textarea class="q-input" id="q5" name="q5"
+        placeholder="當環境不允許我這樣做時，我的感受是⋯⋯"
+        rows="4" aria-required="true" aria-describedby="q5-counter q5-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q5-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex5" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q5-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex5">
+        <strong>📝 範例參考</strong>
+        有。當任務不是單純的產品新聞稿，無法單靠資料搜集或技術理解來完成時，感覺會很沒有方向，不知道該怎麼下手，像是失去了著力點。
+      </div>
+    </div>
+
+    <!-- 第六題 -->
+    <div class="question-card" id="card-6">
+      <div class="q-number"><span class="q-num-dot">6</span> 第六題</div>
+      <label class="q-label" for="q6">
+        回想整個職涯，這個「做得最順」的模式，有沒有在其他完全不同的工作或情境裡也出現過？<span style="color:#c09080;">*</span>
+      </label>
+      <p class="q-hint">如果有，是什麼情況？</p>
+      <textarea class="q-input" id="q6" name="q6"
+        placeholder="類似的模式也曾出現在⋯⋯（或：目前沒有想到，但相關情境說明）"
+        rows="4" aria-required="true" aria-describedby="q6-counter q6-error"></textarea>
+      <div class="char-counter">
+        <span class="char-count" id="q6-counter">已輸入 0 字（最少 50 字）</span>
+        <button type="button" class="example-toggle" data-target="ex6" aria-expanded="false">
+          <span class="arrow">▶</span> 查看範例
+        </button>
+      </div>
+      <div class="error-msg" id="q6-error" role="alert">⚠️ 此題為必填，請至少描述 50 個字。</div>
+      <div class="example-box" id="ex6">
+        <strong>📝 範例參考</strong>
+        目前沒有想到其他非常相似的情況。不過回想起來，在學生時期組織社團活動時，也會習慣先搜集相關案例和背景資料，才開始規劃執行方向。
+      </div>
+    </div>
+
+    <!-- ===== 送出按鈕區 ===== -->
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        🔍 開始分析核心能力
+      </button>
+      <button type="button" class="btn btn-secondary" id="clearBtn">
+        清除重填
+      </button>
+    </div>
+
+  </form>
+
+  <!-- ===== 分析結果區塊 ===== -->
+  <section class="result-section" id="resultSection" aria-label="分析結果" aria-live="polite">
+
+    <!-- 關鍵字彙整卡片 -->
+    <div class="result-card">
+      <div class="result-header">
+        <div class="result-header-icon">🔑</div>
+        <div class="result-header-text">
+          <h3>關鍵字彙整</h3>
+          <p>從六題回答中萃取的核心語彙</p>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="tag-group">
+          <div class="tag-group-label">核心動詞（你做事的方式）</div>
+          <div class="tag-list" id="verbTags"></div>
+        </div>
+        <div class="tag-group">
+          <div class="tag-group-label">關鍵名詞（你在乎的事物）</div>
+          <div class="tag-list" id="nounTags"></div>
+        </div>
+        <div class="tag-group">
+          <div class="tag-group-label">情緒模式（不舒適時的感受）</div>
+          <div class="tag-list" id="emotionTags"></div>
+        </div>
+        <div class="tag-group">
+          <div class="tag-group-label">跨情境模式（可遷移的能力）</div>
+          <div class="tag-list" id="patternTags"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 核心方法論卡片 -->
+    <div class="result-card">
+      <div class="result-header">
+        <div class="result-header-icon">🧭</div>
+        <div class="result-header-text">
+          <h3>核心方法論方向</h3>
+          <p>根據動詞群組與情緒模式的對照分析</p>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="methodology-box">
+          <div class="methodology-type">核心類型</div>
+          <div class="methodology-name" id="methodologyName">—</div>
+          <div class="methodology-desc" id="methodologyDesc">—</div>
+          <div class="methodology-scenarios" id="methodologyScenarios"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI 深度分析卡片 -->
+    <div class="result-card">
+      <div class="result-header">
+        <div class="result-header-icon">✨</div>
+        <div class="result-header-text">
+          <h3>深度分析報告</h3>
+          <p>AI 根據您的回答產生的個人化解讀</p>
+        </div>
+      </div>
+      <div class="result-body">
+        <div class="ai-analysis" id="aiAnalysis">分析中⋯⋯</div>
+        <div class="copy-row">
+          <button type="button" class="btn btn-ghost" id="copyBtn">📋 複製報告</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 再次填寫提示 -->
+    <div class="refill-notice show" id="refillNotice">
+      ✅ 如果您想針對不同的工作經歷再次分析，可以點選「清除重填」，重新填寫另一個案例。
+    </div>
+
+    <!-- 底部按鈕 -->
+    <div class="btn-row">
+      <button type="button" class="btn btn-secondary" id="resetBtn">清除重填</button>
+    </div>
+
+  </section>
+
+  <footer class="page-footer">
+    <p>核心價值檢核器 · 職涯諮詢專用工具</p>
+  </footer>
+
+</main>
+
+<script>
+/* ===== JavaScript：核心邏輯 ===== */
+
+// 題目資料（ID → 最少字數限制）
+const QUESTIONS = ['q1','q2','q3','q4','q5','q6'];
+const MIN_CHARS = 50;
+
+// ── 工具函式 ──
+const $ = id => document.getElementById(id);
+
+/** 計算字串的中文/全形字元及英文單詞的大約字數 */
+function countChars(str) {
+  return str.trim().replace(/\s+/g, ' ').length;
+}
+
+/** 更新單一題目的字數顯示 */
+function updateCounter(qid) {
+  const val   = $(qid).value;
+  const count = countChars(val);
+  const el    = $(`${qid}-counter`);
+  if (count === 0) {
+    el.textContent = `已輸入 0 字（最少 ${MIN_CHARS} 字）`;
+    el.className = 'char-count';
+  } else if (count < MIN_CHARS) {
+    el.textContent = `已輸入 ${count} 字（還需要 ${MIN_CHARS - count} 字）`;
+    el.className = 'char-count too-short';
+  } else {
+    el.textContent = `已輸入 ${count} 字 ✓`;
+    el.className = 'char-count ok';
+  }
+}
+
+/** 更新頁面進度列 */
+function updateProgress() {
+  const filled = QUESTIONS.filter(id => countChars($(id).value) >= MIN_CHARS).length;
+  const pct    = Math.round((filled / QUESTIONS.length) * 100);
+  $('progressFill').style.width = pct + '%';
+  $('progressFill').setAttribute('aria-valuenow', pct);
+  $('progressPercent').textContent = pct + '%';
+  if (filled === 0) {
+    $('progressLabel').textContent = '尚未開始填寫';
+  } else if (filled < QUESTIONS.length) {
+    $('progressLabel').textContent = `已完成 ${filled} / ${QUESTIONS.length} 題`;
+  } else {
+    $('progressLabel').textContent = '所有題目已填寫完成 🎉';
+  }
+}
+
+/** 驗證所有欄位 */
+function validateAll() {
+  let allOk = true;
+  QUESTIONS.forEach(id => {
+    const card  = $(`card-${id.replace('q','')}`);
+    const errEl = $(`${id}-error`);
+    if (countChars($(id).value) < MIN_CHARS) {
+      card.classList.add('has-error');
+      errEl.classList.add('show');
+      allOk = false;
+    } else {
+      card.classList.remove('has-error');
+      errEl.classList.remove('show');
+    }
+  });
+  return allOk;
+}
+
+// ── 展開 / 折疊範例 ──
+document.querySelectorAll('[data-target]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const box      = $(btn.dataset.target);
+    const isOpen   = box.classList.toggle('show');
+    const arrow    = btn.querySelector('.arrow');
+    btn.classList.toggle('open', isOpen);
+    btn.setAttribute('aria-expanded', isOpen);
+    arrow.textContent = isOpen ? '▼' : '▶';
+  });
+});
+
+// 展開 / 折疊提示
+document.querySelectorAll('[data-tip]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const box    = $(btn.dataset.tip);
+    const isOpen = box.classList.toggle('show');
+    const arrow  = btn.querySelector('.arrow');
+    btn.classList.toggle('open', isOpen);
+    btn.setAttribute('aria-expanded', isOpen);
+    arrow.textContent = isOpen ? '▼' : '▶';
+  });
+});
+
+// ── 即時字數監聽 ──
+QUESTIONS.forEach(id => {
+  $(id).addEventListener('input', () => {
+    updateCounter(id);
+    updateProgress();
+    // 即時清除錯誤提示
+    const cardNum = id.replace('q','');
+    $(`card-${cardNum}`).classList.remove('has-error');
+    $(`${id}-error`).classList.remove('show');
+  });
+});
+
+// ── 表單送出 ──
+$('mainForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (!validateAll()) {
+    // 滾動到第一個錯誤欄位
+    const firstErr = document.querySelector('.has-error');
+    if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  await runAnalysis();
+});
+
+// ── 清除重填 ──
+function resetForm() {
+  QUESTIONS.forEach(id => {
+    $(id).value = '';
+    updateCounter(id);
+    $(`card-${id.replace('q','')}`).classList.remove('has-error');
+    $(`${id}-error`).classList.remove('show');
+    // 關閉所有展開區塊
+    const exBox = $(`ex${id.replace('q','')}`);
+    if (exBox) exBox.classList.remove('show');
+  });
+  updateProgress();
+  $('resultSection').classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('clearBtn').addEventListener('click', resetForm);
+$('resetBtn').addEventListener('click', resetForm);
+
+// ── 複製報告 ──
+$('copyBtn').addEventListener('click', () => {
+  const text = $('aiAnalysis').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    $('copyBtn').textContent = '✅ 已複製';
+    setTimeout(() => { $('copyBtn').textContent = '📋 複製報告'; }, 2000);
+  }).catch(() => {
+    // 備援：選取文字
+    const range = document.createRange();
+    range.selectNode($('aiAnalysis'));
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+});
+
+// ── 本地端關鍵字萃取（基礎版，輔助 AI 分析） ──
+function extractKeywords(answers) {
+  const allText = answers.join(' ');
+
+  // 常見動詞組
+  const verbPatterns = [
+    '理解','分析','判斷','研究','評估','探索','找出','查找','搜集','蒐集',
+    '轉化','詮釋','表達','溝通','說服','撰寫','整合','協調','推進',
+    '設計','規劃','策劃','架構','建立','組織','拆解','系統化','梳理',
+    '掃描','鎖定','監測','追蹤','觀察','感知','預測','提煉','萃取',
+    '執行','落實','推動','完成','解決','突破','克服',
+    '領導','帶領','培育','輔導','賦能'
+  ];
+
+  // 關鍵名詞組
+  const nounPatterns = [
+    '資訊','數據','資料','洞察','訊息','背景','脈絡','邏輯','架構',
+    '策略','方向','目標','計畫','流程','方法','系統','框架',
+    '關係','利害關係人','溝通','信任','共識','說明','提案',
+    '市場','用戶','客戶','媒體','品牌','價值','定位','亮點',
+    '技術','產品','創新','功能','細節','品質',
+    '團隊','合作','領導','專案','資源','預算','時程'
+  ];
+
+  const foundVerbs   = verbPatterns.filter(v => allText.includes(v)).slice(0, 8);
+  const foundNouns   = nounPatterns.filter(n => allText.includes(n)).slice(0, 8);
+
+  // 情緒模式（第五題）
+  const q5 = answers[4] || '';
+  const emotionMap = [
+    { words: ['迷霧','迷失','方向','找不到'], label: '失去方向感' },
+    { words: ['卡住','卡關','前進','動彈不得'], label: '被卡住無法前進' },
+    { words: ['著力點','下手','素材','無從'], label: '失去著力點' },
+    { words: ['困住','結構','限制','框架'], label: '被結構困住' },
+    { words: ['不知道','不確定','模糊','不清楚'], label: '目標模糊不清' },
+    { words: ['沒動力','倦怠','無聊','重複'], label: '失去內在驅動力' },
+    { words: ['衝突','對立','矛盾','被反對'], label: '遭遇人際阻力' },
+  ];
+  const foundEmotions = emotionMap
+    .filter(e => e.words.some(w => q5.includes(w)))
+    .map(e => e.label)
+    .slice(0, 3);
+  if (foundEmotions.length === 0) foundEmotions.push('環境不允許發揮時受阻');
+
+  // 跨情境模式（第六題）
+  const q6 = answers[5] || '';
+  const patterns = [];
+  if (q6.length > 10 && !q6.includes('目前沒有') && !q6.includes('沒有想到')) {
+    patterns.push('跨場景可遷移');
+  }
+  if (allText.includes('主動') || allText.includes('自發') || allText.includes('自己去找')) {
+    patterns.push('主動驅動型');
+  }
+  if (allText.includes('細節') || allText.includes('注意到') || allText.includes('觀察')) {
+    patterns.push('細節敏感度高');
+  }
+  if (allText.includes('整合') || allText.includes('協調') || allText.includes('多方')) {
+    patterns.push('跨部門整合力');
+  }
+  if (patterns.length === 0) patterns.push('需更多案例確認');
+
+  return { verbs: foundVerbs, nouns: foundNouns, emotions: foundEmotions, patterns };
+}
+
+/** 根據動詞群組推斷核心方法論 */
+function inferMethodology(verbs) {
+  const verbStr = verbs.join('');
+  if (['理解','分析','研究','評估','判斷','找出','邏輯','脈絡'].some(v => verbStr.includes(v))) {
+    return {
+      name: '認知建立型',
+      desc: '你傾向先理解全局、建立清晰的認知框架後，才做行動決策。你的優勢在於能從複雜資訊中找到關鍵判斷依據。',
+      scenarios: ['策略規劃','市場研究','產品分析','顧問服務','研究型職位']
+    };
+  }
+  if (['轉化','詮釋','表達','撰寫','溝通','說服','訊息','提煉'].some(v => verbStr.includes(v))) {
+    return {
+      name: '價值轉譯型',
+      desc: '你擅長將複雜、技術性或抽象的資訊，轉化為有市場意義或易於理解的溝通語言。你的優勢在於讓「好東西被看見」。',
+      scenarios: ['行銷策略','品牌傳播','公關','內容策略','產品行銷']
+    };
+  }
+  if (['設計','規劃','架構','系統化','梳理','建立','組織'].some(v => verbStr.includes(v))) {
+    return {
+      name: '結構設計型',
+      desc: '你擅長將混亂或複雜的問題系統化，建立清晰的架構與流程。你的優勢在於讓事情「可被管理、可被複製」。',
+      scenarios: ['專案管理','流程優化','系統設計','產品管理','組織設計']
+    };
+  }
+  if (['掃描','鎖定','觀察','感知','預測','追蹤'].some(v => verbStr.includes(v))) {
+    return {
+      name: '情境掃描型',
+      desc: '你對環境變化、人際動態或市場訊號具有高度敏感度，能快速鎖定重要的機會或風險點。',
+      scenarios: ['商業開發','策略偵查','情報分析','投資研究','外交談判']
+    };
+  }
+  if (['執行','落實','推動','完成','帶領','協調'].some(v => verbStr.includes(v))) {
+    return {
+      name: '推進落實型',
+      desc: '你擅長將計畫變成現實，確保事情有效執行到底。你的優勢在於讓「想法不只停在白板上」。',
+      scenarios: ['專案執行','營運管理','團隊帶領','客戶服務','業務推展']
+    };
+  }
+  return {
+    name: '待進一步分析',
+    desc: '根據現有回答尚無法明確歸類，建議補充更多細節後重新分析。',
+    scenarios: ['需更多案例資料']
+  };
+}
+
+/** 渲染關鍵字標籤 */
+function renderTags(containerId, tags, type) {
+  const container = $(containerId);
+  container.innerHTML = '';
+  if (tags.length === 0) {
+    container.innerHTML = '<span style="font-size:13px;color:var(--text-muted);">未萃取到明確關鍵字</span>';
+    return;
+  }
+  tags.forEach(tag => {
+    const el = document.createElement('span');
+    el.className = `tag ${type}`;
+    el.textContent = tag;
+    container.appendChild(el);
+  });
+}
+
+/** 渲染核心方法論 */
+function renderMethodology(methodology) {
+  $('methodologyName').textContent  = methodology.name;
+  $('methodologyDesc').textContent  = methodology.desc;
+  const container = $('methodologyScenarios');
+  container.innerHTML = '';
+  methodology.scenarios.forEach(s => {
+    const el = document.createElement('span');
+    el.className = 'scenario-tag';
+    el.textContent = s;
+    container.appendChild(el);
+  });
+}
+
+// ── 主分析流程 ──
+async function runAnalysis() {
+  const answers = QUESTIONS.map(id => $(id).value.trim());
+
+  // 顯示載入中
+  const overlay = $('loadingOverlay');
+  overlay.classList.add('show');
+
+  // 載入文字輪播
+  const loadingMsgs = [
+    '正在萃取關鍵字⋯⋯',
+    '分析動詞模式⋯⋯',
+    '比對情緒與行為線索⋯⋯',
+    '生成個人化報告⋯⋯'
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMsgs.length;
+    $('loadingText').textContent = loadingMsgs[msgIdx];
+  }, 1400);
+
+  try {
+    // 1. 本地端萃取關鍵字
+    const keywords   = extractKeywords(answers);
+    const methodology = inferMethodology(keywords.verbs);
+
+    // 2. 呼叫 AI API 產生深度分析
+    const aiText = await callClaudeAPI(answers, keywords, methodology);
+
+    // 3. 渲染結果
+    renderTags('verbTags',    keywords.verbs,    'verb');
+    renderTags('nounTags',    keywords.nouns,    'noun');
+    renderTags('emotionTags', keywords.emotions, 'emotion');
+    renderTags('patternTags', keywords.patterns, 'pattern');
+    renderMethodology(methodology);
+    $('aiAnalysis').textContent = aiText;
+
+    // 顯示結果區塊
+    $('resultSection').classList.add('show');
+    setTimeout(() => {
+      $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+
+  } catch (err) {
+    console.error('分析失敗：', err);
+    $('aiAnalysis').textContent = '⚠️ 分析時發生錯誤，請稍後再試。如果問題持續，請確認網路連線是否正常。\n\n錯誤詳情：' + err.message;
+    $('resultSection').classList.add('show');
+    $('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } finally {
+    clearInterval(msgInterval);
+    overlay.classList.remove('show');
+    $('loadingText').textContent = '正在分析您的核心能力⋯⋯';
+  }
+}
+
+/** 呼叫 Claude API 進行深度分析 */
+async function callClaudeAPI(answers, keywords, methodology) {
+  const prompt = `你是一位專業的職涯諮詢顧問，擅長從工作經歷中萃取一個人的核心能力與工作方法論。
+
+以下是一位來訪者填寫的六道問卷回答：
+
+【第一題】描述做得最順、最不費力的工作經歷：
+${answers[0]}
+
+【第二題】準備時第一個想搞清楚的是什麼：
+${answers[1]}
+
+【第三題】判斷怎麼做的依據，找了什麼資訊：
+${answers[2]}
+
+【第四題】換一個同樣資歷的人，哪個地方最可能出問題：
+${answers[3]}
+
+【第五題】沒辦法這樣做的情況，當時什麼感覺：
+${answers[4]}
+
+【第六題】這個模式在其他情境中有沒有出現過：
+${answers[5]}
+
+本地分析已初步萃取：
+- 核心動詞：${keywords.verbs.join('、') || '（未萃取到）'}
+- 情緒模式：${keywords.emotions.join('、')}
+- 初步方法論方向：${methodology.name}
+
+請依據以上資料，撰寫一份繁體中文的個人化分析報告，格式如下：
+
+▍核心能力識別
+（用2-3句話說明這個人最核心的工作能力是什麼）
+
+▍動詞模式解讀
+（分析他描述工作時用到的動詞透露了什麼工作方式）
+
+▍舒適區與不舒適區
+（根據第四、五題，說明他的強項邊界在哪裡）
+
+▍職涯可延伸的方向
+（根據核心方法論，提出2-3個可以拓展的職能方向，附上簡短理由）
+
+▍給這位來訪者的一句話
+（一句精準的職涯定位語，幫助他向外描述自己的價值）
+
+請以溫暖、直接、專業的語氣撰寫，避免過度正面的空話，聚焦在真正具體的洞察。`;
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${response.status}`);
+  }
+
+  const data = await response.json();
+  // 合併所有 text 型 content block
+  return data.content
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join('\n');
+}
+</script>
+</body>
+</html>
